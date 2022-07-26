@@ -19,6 +19,12 @@ class User(AbstractUser):
         'Биография',
         blank=True
     )
+    email = models.EmailField(
+        max_length=254,
+        unique=True,
+        blank=False,
+        null=False
+    )
 
     @property
     def is_user(self):
@@ -42,8 +48,8 @@ class User(AbstractUser):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
+    name = models.CharField(max_length=256)
+    slug = models.SlugField(unique=True, max_length=50)
 
     class Meta:
         verbose_name = 'Категория'
@@ -54,7 +60,7 @@ class Category(models.Model):
 
 
 class Genre(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=256)
     slug = models.SlugField(unique=True)
 
     class Meta:
@@ -66,8 +72,9 @@ class Genre(models.Model):
 
 
 class Title(models.Model):
-    name = models.CharField(max_length=50)
-    year = models.PositiveIntegerField('Год')
+    name = models.CharField(max_length=256)
+    year = models.PositiveIntegerField('Год выпуска')
+    description = models.TextField('Описание')
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -110,7 +117,7 @@ class Review(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(10)]
     )
     pub_date = models.DateTimeField(
-        'Дата публикации',
+        'Дата публикации отзыва',
         auto_now_add=True
     )
 
