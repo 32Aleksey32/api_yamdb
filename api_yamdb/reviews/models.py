@@ -15,10 +15,9 @@ class User(AbstractUser):
         choices=ROLE_CHOICES,
         default='user'
     )
-    bio = models.TextField(
-        'Биография',
-        blank=True
-    )
+    first_name = models.CharField('Имя', max_length=150, blank=True)
+    last_name = models.CharField('Фамилия', max_length=150, blank=True)
+    bio = models.TextField('Биография',blank=True)
 
     @property
     def is_user(self):
@@ -42,7 +41,7 @@ class User(AbstractUser):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=256)
     slug = models.SlugField(unique=True)
 
     class Meta:
