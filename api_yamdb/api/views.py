@@ -1,4 +1,5 @@
 from rest_framework import filters, status, viewsets, views
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
@@ -43,26 +44,24 @@ class UsersViewSet(viewsets.ModelViewSet):
     search_fields = ('username',)
     lookup_field = 'username'
 
-
-class MeView(views.APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        serializer = MeSerializer(self.request.user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def patch(self, request):
+    @action(
+        detail=False,
+        methods=['get', 'patch'],
+        permission_classes=[IsAuthenticated]
+    )
+    def me(self, request):
+        if request.method == 'GET':
+            serializer = MeSerializer(self.request.user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         serializer = MeSerializer(
-            self.request.user,
-            data=request.data,
-            partial=True
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            self.request.user, data=request.data, partial=True)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors)
 
 
-class SignupAPIView(views.APIView):
+class SignupView(views.APIView):
 
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
@@ -91,7 +90,7 @@ class SignupAPIView(views.APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class APIToken(views.APIView):
+class TokenView(views.APIView):
 
     def post(self, request):
         serializer = JwtTokenSerializer(data=request.data)
