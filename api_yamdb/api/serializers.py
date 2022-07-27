@@ -38,6 +38,12 @@ class UsersSerializer(serializers.ModelSerializer):
             'role',
         )
         model = User
+        validators = [
+            UniqueTogetherValidator(
+                queryset=User.objects.all(),
+                fields=('username', 'email')
+            )
+        ]
 
 
 class MeSerializer(serializers.ModelSerializer):
@@ -56,24 +62,18 @@ class MeSerializer(serializers.ModelSerializer):
 
 
 class SignupSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True,)
+    email = serializers.EmailField(required=True)
     username = serializers.CharField(required=True, validators=[
         RegexValidator(
             regex=r'^[\w.@+-]+\Z',
-            message='Имя задано некорректно',
-        ),
+            message='Not a valid username.',
+        )
     ])
-#    validators = [
-#            UniqueTogetherValidator(
-#                queryset=User.objects.all(),
-#                fields=('email', 'username')
-#            )
-#        ]
 
     def validate_username(self, value):
         if value == 'me':
             raise serializers.ValidationError(
-                'Использовать "me" в качестве username запрещено.')
+                'Using "me" as a username is forbidden.')
         return value
 
 
@@ -82,6 +82,6 @@ class JwtTokenSerializer(serializers.Serializer):
     username = serializers.CharField(required=True, validators=[
         RegexValidator(
             regex=r'^[\w.@+-]+\Z',
-            message='Пользователь с таким именем не найден',
-        ),
+            message='A user with that username is not found.',
+        )
     ])
