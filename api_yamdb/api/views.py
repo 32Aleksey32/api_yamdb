@@ -1,9 +1,11 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets, views
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.mixins import DestroyModelMixin, CreateModelMixin, ListModelMixin
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
-from .pagination import UsersPagination
+from .pagination import UsersPagination, CategoriesPagination, GenresPagination, TitlesPagination
 
 from reviews.models import Title, Category, Genre, User
 from .permissions import IsAdmin, IsAdminOrReadOnly
@@ -17,22 +19,33 @@ from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 
 
-class TitleViewSet(viewsets.ReadOnlyModelViewSet):
+class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
-    permission_classes = (IsAdminUser,)
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filterset_fields = ('genre', 'category', 'name', 'year')
+    search_fields = ('name',)
+    pagination_class = TitlesPagination
 
 
-class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+class CategoryViewSet(CreateModelMixin, ListModelMixin,
+                      DestroyModelMixin, viewsets.GenericViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (IsAdminUser,)
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+    pagination_class = CategoriesPagination
 
 
-class GenreViewSet(viewsets.ReadOnlyModelViewSet):
+class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (IsAdminUser,)
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+    pagination_class = GenresPagination
 
 
 class UsersViewSet(viewsets.ModelViewSet):

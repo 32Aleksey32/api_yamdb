@@ -3,27 +3,34 @@ from rest_framework.validators import UniqueTogetherValidator
 from django.core.validators import RegexValidator
 from reviews.models import Title, Category, Genre, User
 from rest_framework.relations import SlugRelatedField
+import datetime as dt
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    category = SlugRelatedField(slug_field='name', read_only=True)
-    genre = SlugRelatedField(slug_field='name', read_only=True)
+    category = SlugRelatedField(queryset=Category.objects.all(), slug_field='slug')
+    genre = SlugRelatedField(slug_field='slug', read_only=True, many=True)
 
     class Meta:
         model = Title
-        fields = '__all__'
+        fields = ('id', 'name', 'year', 'category', 'genre', 'description')
+
+    def validate_year(self, value):
+        year = dt.date.today().year
+        if not (value < year):
+            raise serializers.ValidationError('Проверьте год произведения!')
+        return value
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = '__all__'
+        fields = ('name', 'slug')
 
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        fields = '__all__'
+        fields = ('name', 'slug')
 
 
 class UsersSerializer(serializers.ModelSerializer):

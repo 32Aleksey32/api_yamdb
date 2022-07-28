@@ -64,6 +64,7 @@ class Category(models.Model):
         return self.name
 
 
+
 class Genre(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(unique=True)
@@ -77,7 +78,7 @@ class Genre(models.Model):
 
 
 class Title(models.Model):
-    name = models.CharField(max_length=256)
+    name = models.CharField('Название произведения', max_length=256)
     year = models.PositiveIntegerField('Год выпуска')
     description = models.TextField('Описание')
     category = models.ForeignKey(
