@@ -3,27 +3,34 @@ from rest_framework.validators import UniqueTogetherValidator
 from django.core.validators import RegexValidator
 from reviews.models import Title, Category, Genre, User, Review, Comment
 from rest_framework.relations import SlugRelatedField
+import datetime as dt
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    category = SlugRelatedField(slug_field='name', read_only=True)
-    genre = SlugRelatedField(slug_field='name', read_only=True)
+    category = SlugRelatedField(queryset=Category.objects.all(), slug_field='slug')
+    genre = SlugRelatedField(slug_field='slug', read_only=True, many=True)
 
     class Meta:
         model = Title
-        fields = '__all__'
+        fields = ('id', 'name', 'year', 'category', 'genre', 'description')
+
+    def validate_year(self, value):
+        year = dt.date.today().year
+        if not (value < year):
+            raise serializers.ValidationError('Проверьте год произведения!')
+        return value
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = '__all__'
+        fields = ('name', 'slug')
 
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        fields = '__all__'
+        fields = ('name', 'slug')
 
 
 class UsersSerializer(serializers.ModelSerializer):
@@ -38,6 +45,12 @@ class UsersSerializer(serializers.ModelSerializer):
             'role',
         )
         model = User
+        validators = [
+            UniqueTogetherValidator(
+                queryset=User.objects.all(),
+                fields=('username', 'email')
+            )
+        ]
 
 
 class MeSerializer(serializers.ModelSerializer):
@@ -56,24 +69,18 @@ class MeSerializer(serializers.ModelSerializer):
 
 
 class SignupSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True,)
+    email = serializers.EmailField(required=True)
     username = serializers.CharField(required=True, validators=[
         RegexValidator(
             regex=r'^[\w.@+-]+\Z',
-            message='Имя задано некорректно',
-        ),
+            message='Not a valid username.',
+        )
     ])
-#    validators = [
-#            UniqueTogetherValidator(
-#                queryset=User.objects.all(),
-#                fields=('email', 'username')
-#            )
-#        ]
 
     def validate_username(self, value):
         if value == 'me':
             raise serializers.ValidationError(
-                'Использовать "me" в качестве username запрещено.')
+                'Using "me" as a username is forbidden.')
         return value
 
 
@@ -82,8 +89,8 @@ class JwtTokenSerializer(serializers.Serializer):
     username = serializers.CharField(required=True, validators=[
         RegexValidator(
             regex=r'^[\w.@+-]+\Z',
-            message='Пользователь с таким именем не найден',
-        ),
+            message='A user with that username is not found.',
+        )
     ])
 
 
