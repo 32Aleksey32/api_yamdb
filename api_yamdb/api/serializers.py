@@ -1,9 +1,11 @@
-from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
-from django.core.validators import RegexValidator
-from reviews.models import Title, Category, Genre, User, Review, Comment
-from rest_framework.relations import SlugRelatedField
 import datetime as dt
+
+from django.core.validators import RegexValidator
+from rest_framework import serializers
+from rest_framework.relations import SlugRelatedField
+from rest_framework.validators import UniqueTogetherValidator
+
+from reviews.models import Title, Category, Genre, User, Review, Comment
 
 
 class TitleSerializer(serializers.ModelSerializer):
@@ -104,12 +106,12 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ('id', 'score', 'text', 'pub_date', 'author',)
-        read_only_fields = ('id', 'title', 'pub_date', 'author',)
+        read_only_fields = ('id', 'pub_date', 'author',)
 
 
 class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ('text',)
-        read_only_fields = ('id', 'text', 'pub_date', 'author',)
+        fields = ('id', 'text', 'pub_date', 'author',)
+        read_only_fields = ('id', 'pub_date', 'author',)
