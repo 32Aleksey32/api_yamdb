@@ -1,21 +1,29 @@
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, status, viewsets, views
-from rest_framework.decorators import action
-from rest_framework.mixins import DestroyModelMixin, CreateModelMixin, ListModelMixin
-from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
-from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import AccessToken
-from .filter import TitleFilter
-from .pagination import UsersPagination, CategoriesPagination, GenresPagination, TitlesPagination
-from reviews.models import Title, Category, Genre, User
-from .permissions import IsAdmin, IsAdminOrReadOnly
-from .serializers import (TitleSerializer, TitleReadSerializer, CategorySerializer, GenreSerializer,
-                          UsersSerializer, SignupSerializer, MeSerializer,
-                          JwtTokenSerializer)
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, status, viewsets, views
+from rest_framework.decorators import action
+from rest_framework.mixins import DestroyModelMixin, CreateModelMixin, ListModelMixin
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import AccessToken
+from .filter import TitleFilter
+from django.conf import settings
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.shortcuts import get_object_or_404
+from rest_framework.permissions import (IsAuthenticated, AllowAny,
+                                        IsAuthenticatedOrReadOnly)
+from reviews.models import Title, Category, Genre, User, Review
+from .pagination import (UsersPagination, CategoriesPagination,
+                         GenresPagination, TitlesPagination,
+                         ReviewsPagination, CommentsPagination)
+from .permissions import IsAdmin, IsAdminOrReadOnly, IsAuthorOrAdmin
+from .serializers import (TitleSerializer, CategorySerializer, GenreSerializer,
+                          UsersSerializer, SignupSerializer, MeSerializer,
+                          JwtTokenSerializer, ReviewSerializer,
+                          CommentSerializer)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -126,3 +134,42 @@ class TokenView(views.APIView):
             return Response(token, status=status.HTTP_200_OK)
         return Response(
             serializer.error_messages, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly, )
+    pagination_class = ReviewsPagination
+
+    def get_permissions(self):
+        if self.action in ['destroy', 'partial_update']:
+            return (IsAuthorOrAdmin(),)
+        return super().get_permissions()
+
+    def get_queryset(self):
+        title = get_object_or_404(Title, id=self.kwargs.get("title_id"))
+        return title.reviews.all()
+
+    def perform_create(self, serializer):
+        title = get_object_or_404(Title, id=self.kwargs.get("title_id"))
+        serializer.save(
+            title=title,
+            author=self.request.user
+        )
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    pagination_class = CommentsPagination
+
+    def get_queryset(self):
+        review = get_object_or_404(Review, id=self.kwargs.get("review_id"))
+        return review.comments.all()
+
+    def perform_create(self, serializer):
+        review = get_object_or_404(Review, id=self.kwargs.get("review_id"))
+        serializer.save(
+            review=review,
+            author=self.request.user
+        )

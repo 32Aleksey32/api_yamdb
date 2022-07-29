@@ -1,9 +1,11 @@
-from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
-from django.core.validators import RegexValidator
-from reviews.models import Title, Category, Genre, User
-from rest_framework.relations import SlugRelatedField
 import datetime as dt
+
+from django.core.validators import RegexValidator
+from rest_framework import serializers
+from rest_framework.relations import SlugRelatedField
+from rest_framework.validators import UniqueTogetherValidator
+
+from reviews.models import Title, Category, Genre, User, Review, Comment
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -101,3 +103,24 @@ class JwtTokenSerializer(serializers.Serializer):
             message='A user with that username is not found.',
         )
     ])
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        required=False,
+        read_only=True,
+        slug_field='username'
+    )
+
+    class Meta:
+        model = Review
+        fields = ('id', 'score', 'text', 'pub_date', 'author',)
+        read_only_fields = ('id', 'pub_date', 'author',)
+
+
+class CommentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Comment
+        fields = ('id', 'text', 'pub_date', 'author',)
+        read_only_fields = ('id', 'pub_date', 'author',)
