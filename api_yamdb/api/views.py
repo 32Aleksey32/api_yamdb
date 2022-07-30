@@ -6,8 +6,8 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets, views
 from rest_framework.decorators import action
-from rest_framework.mixins import DestroyModelMixin, CreateModelMixin, \
-    ListModelMixin
+from rest_framework.mixins import (DestroyModelMixin, CreateModelMixin,
+                                   ListModelMixin)
 from rest_framework.permissions import (IsAuthenticated, AllowAny,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
