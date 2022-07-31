@@ -15,9 +15,6 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from reviews.models import Title, Category, Genre, User, Review
 from .filter import TitleFilter
-from .pagination import (UsersPagination, CategoriesPagination,
-                         GenresPagination, TitlesPagination,
-                         ReviewsPagination, CommentsPagination)
 from .permissions import IsAdmin, IsAdminOrReadOnly, IsAuthorOrAdmin
 from .serializers import (TitleSerializer, CategorySerializer, GenreSerializer,
                           UsersSerializer, SignupSerializer, MeSerializer,
@@ -26,14 +23,13 @@ from .serializers import (TitleSerializer, CategorySerializer, GenreSerializer,
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.annotate(
+    queryset = Title.objects.all().annotate(
         rating=Avg('reviews__score')
     ).order_by('id')
     serializer_class = TitleSerializer
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
-    pagination_class = TitlesPagination
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
@@ -48,7 +44,6 @@ class CategoryViewSet(CreateModelMixin, ListModelMixin,
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
-    pagination_class = CategoriesPagination
     lookup_field = 'slug'
 
 
@@ -59,7 +54,6 @@ class GenreViewSet(CreateModelMixin, ListModelMixin,
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
-    pagination_class = GenresPagination
     lookup_field = 'slug'
 
 
@@ -67,7 +61,6 @@ class UsersViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     permission_classes = (IsAdmin,)
     serializer_class = UsersSerializer
-    pagination_class = UsersPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ('username',)
     lookup_field = 'username'
@@ -141,7 +134,6 @@ class TokenView(views.APIView):
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, )
-    pagination_class = ReviewsPagination
 
     def get_permissions(self):
         if self.action in ['destroy', 'partial_update']:
@@ -163,7 +155,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
-    pagination_class = CommentsPagination
 
     def get_permissions(self):
         if self.action in ['destroy', 'partial_update']:
