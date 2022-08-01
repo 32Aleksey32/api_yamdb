@@ -89,21 +89,6 @@ class UsersSerializer(serializers.ModelSerializer):
         ]
 
 
-class MeSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = User
-        fields = (
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'bio',
-            'role'
-        )
-        read_only_fields = ('role',)
-
-
 class SignupSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     username = serializers.CharField(required=True, validators=[
@@ -113,11 +98,20 @@ class SignupSerializer(serializers.Serializer):
         )
     ])
 
-    def validate_username(self, value):
-        if value == 'me':
+    def validate(self, data):
+        if data['username'] == 'me':
             raise serializers.ValidationError(
-                'Using "me" as a username is forbidden.')
-        return value
+                'Using "me" as a username is forbidden.'
+            )
+        if User.objects.filter(username=data['username']).exists():
+            raise serializers.ValidationError(
+                'A user with that username already exists.'
+            )
+        if User.objects.filter(email=data['email']).exists():
+            raise serializers.ValidationError(
+                'A user with that email already exists.'
+            )
+        return data
 
 
 class JwtTokenSerializer(serializers.Serializer):

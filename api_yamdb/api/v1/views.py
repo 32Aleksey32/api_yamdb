@@ -17,7 +17,7 @@ from reviews.models import Title, Category, Genre, User, Review
 from .filter import TitleFilter
 from .permissions import IsAdmin, IsAdminOrReadOnly, IsAuthorOrAdmin
 from .serializers import (TitleSerializer, CategorySerializer, GenreSerializer,
-                          UsersSerializer, SignupSerializer, MeSerializer,
+                          UsersSerializer, SignupSerializer,
                           JwtTokenSerializer, ReviewSerializer,
                           CommentSerializer, TitleReadSerializer)
 
@@ -72,14 +72,13 @@ class UsersViewSet(viewsets.ModelViewSet):
     )
     def me(self, request):
         if request.method == 'GET':
-            serializer = MeSerializer(self.request.user)
+            serializer = UsersSerializer(self.request.user)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        serializer = MeSerializer(
+        serializer = UsersSerializer(
             self.request.user, data=request.data, partial=True)
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.error_messages)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(role=self.request.user.role)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class SignupView(views.APIView):
@@ -90,26 +89,15 @@ class SignupView(views.APIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        email = serializer.validated_data.get('email').lower()
-        username = serializer.validated_data.get('username')
-        if User.objects.filter(email=email, username=username).exists():
-            user = User.objects.get(
-                email=email, username=username)
-        else:
-            if User.objects.filter(username=username).exists():
-                return Response(serializer.error_messages,
-                                status=status.HTTP_400_BAD_REQUEST)
-            if User.objects.filter(email=email).exists():
-                return Response(serializer.error_messages,
-                                status=status.HTTP_400_BAD_REQUEST)
-            user = User.objects.create(email=email, username=username)
+        user, created = User.objects.get_or_create(**serializer.data)
+        user.save()
         confirmation_code = default_token_generator.make_token(user)
         mail_subject = 'Confirmation code'
         message = f'Your confirmation code: {confirmation_code}'
         send_mail(mail_subject,
                   message,
                   settings.EMAIL_FROM,
-                  [email])
+                  [user.email])
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -122,7 +110,7 @@ class TokenView(views.APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = get_object_or_404(
-            User, username=serializer.data.get('username'))
+            User, username=serializer.validated_data.get('username'))
         confirmation_code = serializer.validated_data.get('confirmation_code')
         if default_token_generator.check_token(user, confirmation_code):
             token = {'token': str(AccessToken.for_user(user))}
