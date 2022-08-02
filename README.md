@@ -109,3 +109,7 @@ GET /api/v1/titles/
   }
 ]
 ```
+### Авторы:
+* [32Aleksey32](https://github.com/32Aleksey32)
+* [LatentBlondinkO](https://github.com/LatentBlondinkO)
+* [vnovoselov](https://github.com/vnovoselov)
