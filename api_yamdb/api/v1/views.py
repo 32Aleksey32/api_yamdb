@@ -90,7 +90,7 @@ class SignupView(views.APIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user, created = User.objects.get_or_create(**serializer.data)
+        user, _ = User.objects.get_or_create(**serializer.data)
         user.save()
         confirmation_code = default_token_generator.make_token(user)
         mail_subject = 'Confirmation code'

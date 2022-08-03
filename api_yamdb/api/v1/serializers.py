@@ -3,7 +3,6 @@ import datetime as dt
 from django.core.validators import RegexValidator
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
-from rest_framework.validators import UniqueTogetherValidator
 
 from reviews.models import Title, Category, Genre, User, Review, Comment
 
@@ -81,12 +80,6 @@ class UsersSerializer(serializers.ModelSerializer):
             'role',
         )
         model = User
-        validators = [
-            UniqueTogetherValidator(
-                queryset=User.objects.all(),
-                fields=('username', 'email')
-            )
-        ]
 
 
 class SignupSerializer(serializers.Serializer):
