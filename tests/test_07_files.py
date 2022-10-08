@@ -14,7 +14,6 @@ else:
     assert False, f'Не найдено приложение `api` в папке {MANAGE_PATH}'
 
 
-# test .md
 default_md = '# api_yamdb\napi_yamdb\n'
 filename = 'README.md'
 assert filename in root_dir_content, (
