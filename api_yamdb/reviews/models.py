@@ -1,7 +1,9 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
-
+from django.dispatch import receiver
+from django.contrib.auth.tokens import default_token_generator
+from django.db.models.signals import post_save
 
 class User(AbstractUser):
     ROLE_CHOICES = (
@@ -51,7 +53,14 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
-
+@receiver(post_save, sender=User)
+def post_save(sender, instance, created, **kwargs):
+    if created:
+        confirmation_code = default_token_generator.make_token(instance)
+        instance.confirmation_code = confirmation_code
+        instance.save()
+        
+        
 class Category(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(unique=True, max_length=50)
